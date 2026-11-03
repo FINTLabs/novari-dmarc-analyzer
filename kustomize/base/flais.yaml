@@ -1,0 +1,14 @@
+apiVersion: fintlabs.no/v1alpha1
+kind: Application
+metadata:
+  name: dmarc-analyzer
+  namespace: novari-no
+spec:
+  orgId: novari.no
+  image: ghcr.io/novari/novari-no-dmarc-analyzer:latest
+  imagePullPolicy: Always
+  database:
+    database: dmarc-analyser
+  envFrom:
+    - secretRef:
+        name: dmarc-analyzer
