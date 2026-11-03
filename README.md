@@ -49,10 +49,10 @@ Hemmeligheter skal ikke legges direkte i manifestene eller committes til reposit
 
 Prosjektet har to overlays:
 
-| Miljø | Overlay | 1Password-element |
-| --- | --- | --- |
-| Beta | `kustomize/overlays/beta/novari-no` | `vaults/aks-beta-vault/items/novari-dmarc-analyzer` |
-| API | `kustomize/overlays/api/novari-no` | `vaults/aks-api-vault/items/novari-dmarc-analyzer` |
+| Miljø | Overlay                             | 1Password-element                                   |
+|-------|-------------------------------------|-----------------------------------------------------|
+| Beta  | `kustomize/overlays/beta/novari-no` | `vaults/aks-beta-vault/items/novari-dmarc-analyzer` |
+| API   | `kustomize/overlays/api/novari-no`  | `vaults/aks-api-vault/items/novari-dmarc-analyzer`  |
 
 Overlayene bruker samme basemanifest, men peker på hvert sitt 1Password-vault.
 
