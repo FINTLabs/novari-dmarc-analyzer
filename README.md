@@ -17,7 +17,7 @@ spec:
   image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer@sha256:c232a277c8c59bc564d4cfaba3fbad75b1bec95275cdb34e176619f278952064
   imagePullPolicy: Always
   database:
-    database: dmarc-analyser
+    database: dmarc-analyzer
   env:
     - name: ConnectionStrings__Default
       value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
@@ -26,7 +26,7 @@ spec:
         name: dmarc-analyzer
 ```
 
-FLAIS håndterer kjøring av containeren og provisjonering av databasen `dmarc-analyser`. Det skal derfor ikke opprettes en separat PostgreSQL `Deployment`, `Service` eller `PersistentVolumeClaim` i dette repositoriet.
+FLAIS håndterer kjøring av containeren og provisjonering av databasen `dmarc-analyzer`. Det skal derfor ikke opprettes en separat PostgreSQL `Deployment`, `Service` eller `PersistentVolumeClaim` i dette repositoriet.
 
 Applikasjonens `ConnectionStrings__Default` bygges fra databaseverdiene som FLAIS gjør tilgjengelig:
 
@@ -64,6 +64,8 @@ Prosjektet har to overlays:
 | API   | `kustomize/overlays/api/novari-no`  | `vaults/aks-api-vault/items/novari-dmarc-analyzer`  |
 
 Overlayene bruker samme basemanifest, men peker på hvert sitt 1Password-vault.
+
+Begge overlayene merker ressursene med `fintlabs.no/org-id: novari.no` og `fintlabs.no/team: flais`. FLAIS bruker blant annet organisasjonslabelen når den bygger den underliggende deploymenten.
 
 ## Validering
 

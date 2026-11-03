@@ -8,7 +8,7 @@ spec:
   image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer@sha256:c232a277c8c59bc564d4cfaba3fbad75b1bec95275cdb34e176619f278952064
   imagePullPolicy: Always
   database:
-    database: dmarc-analyser
+    database: dmarc-analyzer
   env:
     - name: ConnectionStrings__Default
       value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
