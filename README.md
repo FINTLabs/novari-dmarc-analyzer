@@ -14,7 +14,7 @@ metadata:
   namespace: novari-no
 spec:
   orgId: novari.no
-  image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer:latest
+  image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer@sha256:c232a277c8c59bc564d4cfaba3fbad75b1bec95275cdb34e176619f278952064
   imagePullPolicy: Always
   database:
     database: dmarc-analyser
@@ -75,3 +75,19 @@ kubectl kustomize kustomize/overlays/api/novari-no
 ```
 
 Begge kommandoene skal produsere én FLAIS `Application` og én `OnePasswordItem` i namespacet `novari-no`.
+
+## Oppdatere container-image
+
+Container-imaget er låst til en OCI-digest slik at en eksisterende deployment ikke endres dersom `latest` flyttes til en ny versjon. Finn digesten som `latest` peker på med:
+
+```shell
+docker buildx imagetools inspect ghcr.io/dmarc-analyzer-net/dmarc-analyzer:latest
+```
+
+Bruk verdien fra `Digest` i både `kustomize/base/flais.yaml` og den lokale `compose.yml`:
+
+```text
+ghcr.io/dmarc-analyzer-net/dmarc-analyzer@sha256:<digest>
+```
+
+Valider og test den nye versjonen før den oppdaterte digesten deployes.
