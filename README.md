@@ -23,7 +23,7 @@ spec:
       value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
   envFrom:
     - secretRef:
-        name: dmarc-analyzer
+        name: novari-dmarc-analyzer
 ```
 
 FLAIS håndterer kjøring av containeren og provisjonering av databasen `dmarc-analyzer`. Det skal derfor ikke opprettes en separat PostgreSQL `Deployment`, `Service` eller `PersistentVolumeClaim` i dette repositoriet.
@@ -36,7 +36,7 @@ Applikasjonens `ConnectionStrings__Default` bygges fra databaseverdiene som FLAI
 
 ## Hemmeligheter fra 1Password
 
-[`kustomize/base/onePassword.yaml`](kustomize/base/onePassword.yaml) oppretter en `OnePasswordItem`. 1Password-operatoren gjør elementet tilgjengelig som en Kubernetes Secret med navnet `dmarc-analyzer`. Hele secreten leses inn som miljøvariabler gjennom `spec.envFrom` i FLAIS-applikasjonen.
+[`kustomize/base/onePassword.yaml`](kustomize/base/onePassword.yaml) oppretter en `OnePasswordItem`. 1Password-operatoren gjør elementet tilgjengelig som en Kubernetes Secret med navnet `novari-dmarc-analyzer`. Hele secreten leses inn som miljøvariabler gjennom `spec.envFrom` i FLAIS-applikasjonen.
 
 1Password-elementet må inneholde følgende felter med nøyaktig disse navnene:
 

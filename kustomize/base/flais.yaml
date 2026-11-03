@@ -14,4 +14,4 @@ spec:
       value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
   envFrom:
     - secretRef:
-        name: dmarc-analyzer
+        name: novari-dmarc-analyzer

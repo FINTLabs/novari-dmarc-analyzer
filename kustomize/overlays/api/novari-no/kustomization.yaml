@@ -19,4 +19,4 @@ patches:
         value: vaults/aks-api-vault/items/novari-dmarc-analyzer
     target:
       kind: OnePasswordItem
-      name: dmarc-analyzer
+      name: novari-dmarc-analyzer
