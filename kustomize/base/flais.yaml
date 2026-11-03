@@ -5,7 +5,7 @@ metadata:
   namespace: novari-no
 spec:
   orgId: novari.no
-  image: ghcr.io/novari/novari-no-dmarc-analyzer:latest
+  image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer:latest
   imagePullPolicy: Always
   database:
     database: dmarc-analyser

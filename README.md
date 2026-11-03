@@ -14,7 +14,7 @@ metadata:
   namespace: novari-no
 spec:
   orgId: novari.no
-  image: ghcr.io/novari/novari-no-dmarc-analyzer:latest
+  image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer:latest
   imagePullPolicy: Always
   database:
     database: dmarc-analyser
@@ -51,8 +51,8 @@ Prosjektet har to overlays:
 
 | Miljø | Overlay | 1Password-element |
 | --- | --- | --- |
-| Beta | `kustomize/overlays/beta/novari-no` | `vaults/aks-beta-vault/items/dmarc-analyzer` |
-| API | `kustomize/overlays/api/novari-no` | `vaults/aks-api-vault/items/dmarc-analyzer` |
+| Beta | `kustomize/overlays/beta/novari-no` | `vaults/aks-beta-vault/items/novari-dmarc-analyzer` |
+| API | `kustomize/overlays/api/novari-no` | `vaults/aks-api-vault/items/novari-dmarc-analyzer` |
 
 Overlayene bruker samme basemanifest, men peker på hvert sitt 1Password-vault.
 

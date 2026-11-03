@@ -7,7 +7,7 @@ patches:
   - patch: |-
       - op: replace
         path: /spec/itemPath
-        value: vaults/aks-beta-vault/items/dmarc-analyzer
+        value: vaults/aks-beta-vault/items/novari-dmarc-analyzer
     target:
       kind: OnePasswordItem
       name: dmarc-analyzer
