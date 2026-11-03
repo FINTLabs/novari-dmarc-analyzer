@@ -9,6 +9,9 @@ spec:
   imagePullPolicy: Always
   database:
     database: dmarc-analyser
+  env:
+    - name: ConnectionStrings__Default
+      value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
   envFrom:
     - secretRef:
         name: dmarc-analyzer

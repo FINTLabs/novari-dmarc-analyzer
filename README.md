@@ -18,12 +18,21 @@ spec:
   imagePullPolicy: Always
   database:
     database: dmarc-analyser
+  env:
+    - name: ConnectionStrings__Default
+      value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
   envFrom:
     - secretRef:
         name: dmarc-analyzer
 ```
 
 FLAIS håndterer kjøring av containeren og provisjonering av databasen `dmarc-analyser`. Det skal derfor ikke opprettes en separat PostgreSQL `Deployment`, `Service` eller `PersistentVolumeClaim` i dette repositoriet.
+
+Applikasjonens `ConnectionStrings__Default` bygges fra databaseverdiene som FLAIS gjør tilgjengelig:
+
+- `${fint.database.url}`
+- `${fint.database.username}`
+- `${fint.database.password}`
 
 ## Hemmeligheter fra 1Password
 
