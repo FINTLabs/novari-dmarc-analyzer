@@ -3,3 +3,5 @@ kind: Kustomization
 resources:
   - flais.yaml
   - onePassword.yaml
+  - onePassword-collector.yaml
+  - dmarc-collector.yaml

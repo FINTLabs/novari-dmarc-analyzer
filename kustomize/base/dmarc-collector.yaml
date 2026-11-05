@@ -1,0 +1,275 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dmarc-collector
+  namespace: novari-no
+data:
+  collector.py: |
+    import os
+    import json
+    import base64
+    import logging
+    import urllib.request
+    import urllib.parse
+    import urllib.error
+
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+
+    logging.basicConfig(
+        level=getattr(logging, LOG_LEVEL, logging.INFO),
+        format="%(asctime)s %(levelname)s %(message)s"
+    )
+
+    TENANT_ID = os.environ["AZURE_TENANT_ID"]
+    CLIENT_ID = os.environ["AZURE_CLIENT_ID"]
+    CLIENT_SECRET = os.environ["AZURE_CLIENT_SECRET"]
+    MAILBOX = os.environ["DMARC_MAILBOX"]
+    API_KEY = os.environ["DMARC_ANALYZER_API_KEY"]
+    API_URL = os.environ["DMARC_ANALYZER_URL"].rstrip("/")
+
+    GRAPH = "https://graph.microsoft.com/v1.0"
+    EXTENSIONS = (".xml", ".zip", ".gz", ".gzip")
+
+    def request(url, method="GET", headers=None, data=None):
+        req = urllib.request.Request(
+            url, data=data, headers=headers or {}, method=method
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as response:
+                return response.read()
+        except urllib.error.HTTPError as error:
+            response_body = error.read().decode("utf-8", errors="replace")
+            logging.error(
+                "HTTP %s %s failed with %d: %s",
+                method,
+                url,
+                error.code,
+                response_body or "<empty response body>"
+            )
+            raise
+
+    def get_token():
+        logging.debug("Requesting Microsoft Graph access token")
+        url = (
+            f"https://login.microsoftonline.com/"
+            f"{TENANT_ID}/oauth2/v2.0/token"
+        )
+        data = urllib.parse.urlencode({
+            "client_id": CLIENT_ID,
+            "client_secret": CLIENT_SECRET,
+            "scope": "https://graph.microsoft.com/.default",
+            "grant_type": "client_credentials"
+        }).encode()
+
+        result = request(
+            url, "POST",
+            {"Content-Type": "application/x-www-form-urlencoded"},
+            data
+        )
+        token = json.loads(result)["access_token"]
+        logging.debug("Microsoft Graph access token acquired")
+        return token
+
+    def graph_get(url, token):
+        return json.loads(request(
+            url, headers={"Authorization": f"Bearer {token}"}
+        ))
+
+    def graph_patch(url, token, payload):
+        request(
+            url, "PATCH",
+            {
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json"
+            },
+            json.dumps(payload).encode()
+        )
+
+    def upload_report(filename, content):
+        url = f"{API_URL}/api/v1/reports"
+        safe_filename = (
+            filename.replace("\\", "_").replace('"', "_")
+            .replace("\r", "").replace("\n", "")
+        )
+        request(
+            url, "POST",
+            {
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/octet-stream",
+                "Content-Disposition": f'attachment; filename="{safe_filename}"'
+            },
+            content
+        )
+        logging.info("Uploaded: %s (%d bytes)", filename, len(content))
+
+    def main():
+        logging.info("Collector started")
+        token = get_token()
+        mailbox = urllib.parse.quote(MAILBOX, safe="")
+        base = f"{GRAPH}/users/{mailbox}"
+
+        url = (
+            f"{base}/mailFolders/inbox/messages"
+            "?$filter=isRead%20eq%20false"
+            "&$select=id,subject,hasAttachments"
+            "&$top=100"
+        )
+
+        processed = 0
+        uploaded = 0
+        page = 0
+
+        while url:
+            page += 1
+            result = graph_get(url, token)
+            messages = result.get("value", [])
+            logging.debug(
+                "Graph page %d contains %d unread messages",
+                page,
+                len(messages)
+            )
+
+            for message in messages:
+                if not message.get("hasAttachments"):
+                    logging.debug("Skipping message without attachments")
+                    continue
+
+                msg_id = urllib.parse.quote(message["id"], safe="")
+                logging.info(
+                    "Processing: %s",
+                    message.get("subject", "(no subject)")
+                )
+
+                attachments_url = (
+                    f"{base}/messages/{msg_id}/attachments"
+                )
+
+                success = True
+                report_count = 0
+
+                try:
+                    while attachments_url:
+                        attachments = graph_get(attachments_url, token)
+                        attachment_items = attachments.get("value", [])
+                        logging.debug(
+                            "Message attachment page contains %d attachments",
+                            len(attachment_items)
+                        )
+
+                        for attachment in attachment_items:
+                            name = attachment.get("name", "")
+
+                            if not name.lower().endswith(EXTENSIONS):
+                                logging.debug(
+                                    "Skipping unsupported attachment: %s",
+                                    name
+                                )
+                                continue
+
+                            if attachment.get(
+                                "@odata.type"
+                            ) != "#microsoft.graph.fileAttachment":
+                                continue
+
+                            encoded = attachment.get("contentBytes")
+
+                            if not encoded:
+                                logging.warning(
+                                    "Missing content: %s", name
+                                )
+                                success = False
+                                continue
+
+                            content = base64.b64decode(encoded)
+                            upload_report(name, content)
+                            report_count += 1
+                            uploaded += 1
+
+                        attachments_url = attachments.get(
+                            "@odata.nextLink"
+                        )
+
+                    if success and report_count > 0:
+                        graph_patch(
+                            f"{base}/messages/{msg_id}",
+                            token,
+                            {"isRead": True}
+                        )
+                        processed += 1
+
+                except Exception:
+                    logging.exception(
+                        "Failed to process message %s", msg_id
+                    )
+                    success = False
+
+                if not success:
+                    logging.warning(
+                        "Message left unread for retry: %s", msg_id
+                    )
+
+            url = result.get("@odata.nextLink")
+
+        logging.info(
+            "Finished: %d messages, %d reports uploaded",
+            processed, uploaded
+        )
+
+    if __name__ == "__main__":
+        main()
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: dmarc-collector
+  namespace: novari-no
+spec:
+  schedule: "*/5 * * * *"
+  timeZone: Europe/Oslo
+  startingDeadlineSeconds: 300
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      template:
+        spec:
+          restartPolicy: OnFailure
+
+          containers:
+            - name: collector
+              image: docker.io/library/python@sha256:7984cf56ceaddebe4fefeb75d64000b9f45d8b77b11a09b24524da6cdc3af0c8
+              imagePullPolicy: IfNotPresent
+
+              command:
+                - python
+                - /app/collector.py
+
+              envFrom:
+                - secretRef:
+                    name: novari-dmarc-collector
+
+              env:
+                - name: LOG_LEVEL
+                  value: DEBUG
+
+              volumeMounts:
+                - name: script
+                  mountPath: /app
+                  readOnly: true
+
+              resources:
+                requests:
+                  cpu: 25m
+                  memory: 64Mi
+                limits:
+                  cpu: 250m
+                  memory: 256Mi
+
+          volumes:
+            - name: script
+              configMap:
+                name: dmarc-collector

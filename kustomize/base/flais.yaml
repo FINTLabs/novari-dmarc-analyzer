@@ -8,10 +8,12 @@ spec:
   image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer@sha256:c232a277c8c59bc564d4cfaba3fbad75b1bec95275cdb34e176619f278952064
   imagePullPolicy: Always
   database:
-    database: dmarc-analyzer
+    database: flais
   env:
     - name: ConnectionStrings__Default
-      value: "${fint.database.url};Username=${fint.database.username};Password=${fint.database.password}"
+      value: "Host=$(DB_HOST);Port=$(DB_PORT);Database=$(DB_NAME);Username=$(fint.database.username);Password=$(fint.database.password);SSL Mode=Require"
+    - name: Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command
+      value: Warning
   envFrom:
     - secretRef:
         name: novari-dmarc-analyzer

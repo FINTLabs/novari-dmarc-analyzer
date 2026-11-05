@@ -3,6 +3,7 @@ kind: Kustomization
 namespace: novari-no
 resources:
   - ../../../base
+  - ../../../base/mta-sts
 labels:
   - includeSelectors: true
     pairs:
@@ -10,9 +11,29 @@ labels:
       app.kubernetes.io/instance: dmarc-analyzer_novari-no
       app.kubernetes.io/version: "0.15.0"
       app.kubernetes.io/component: backend
+      app.kubernetes.io/part-of: it-operations
       fintlabs.no/org-id: novari.no
       fintlabs.no/team: flais
 patches:
+  - patch: |-
+      - op: add
+        path: /spec/ingress
+        value:
+          routes:
+            - host: dmarc-analyzer.novari.no
+    target:
+      kind: Application
+      name: dmarc-analyzer
+  - patch: |-
+      - op: add
+        path: /spec/ingress
+        value:
+          routes:
+            - host: mta-sts.novari.no
+              path: /.well-known/mta-sts.txt
+    target:
+      kind: Application
+      name: dmarc-analyzer-mta-sts
   - patch: |-
       - op: replace
         path: /spec/itemPath
@@ -20,3 +41,10 @@ patches:
     target:
       kind: OnePasswordItem
       name: novari-dmarc-analyzer
+  - patch: |-
+      - op: replace
+        path: /spec/itemPath
+        value: vaults/aks-api-vault/items/novari-dmarc-collector
+    target:
+      kind: OnePasswordItem
+      name: novari-dmarc-collector

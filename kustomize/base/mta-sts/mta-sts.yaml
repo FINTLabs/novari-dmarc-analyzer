@@ -1,0 +1,45 @@
+apiVersion: fintlabs.no/v1alpha1
+kind: Application
+metadata:
+  name: dmarc-analyzer-mta-sts
+  namespace: novari-no
+spec:
+  orgId: novari.no
+  image: ghcr.io/dmarc-analyzer-net/dmarc-analyzer@sha256:c232a277c8c59bc564d4cfaba3fbad75b1bec95275cdb34e176619f278952064
+  imagePullPolicy: Always
+  port: 8080
+  replicas: 1
+  env:
+    - name: APP_MODE
+      value: mta-sts
+    - name: ConnectionStrings__Default
+      value: "Host=$(DB_HOST);Port=$(DB_PORT);Database=$(DB_NAME);Username=$(fint.database.username);Password=$(fint.database.password);SSL Mode=Require"
+    - name: Logging__LogLevel__Microsoft.EntityFrameworkCore.Database.Command
+      value: Warning
+  envFrom:
+    - secretRef:
+        name: novari-dmarc-analyzer
+    - secretRef:
+        name: dmarc-analyzer-db
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+  probes:
+    readiness:
+      path: /health/ready
+      port: 8080
+      initialDelaySeconds: 5
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 6
+    liveness:
+      path: /health/live
+      port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 30
+      timeoutSeconds: 5
+      failureThreshold: 3
