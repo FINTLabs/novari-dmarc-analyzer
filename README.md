@@ -1,6 +1,6 @@
 # DMARC Analyzer
 
-Dette repositoriet inneholder deployment-konfigurasjon for DMARC Analyzer i Novari-plattformen. Applikasjonen deployes med FLAIS og har Kustomize-overlays for `novari-no` i både beta- og API-miljøet.
+Dette repositoriet inneholder deployment-konfigurasjon for DMARC Analyzer i Novari. Applikasjonen deployes med FLAIS og har Kustomize-overlays for `novari-no` i både beta- og api.
 
 ## FLAIS-applikasjonen
 
