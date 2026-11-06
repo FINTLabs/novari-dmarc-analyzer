@@ -67,7 +67,7 @@ jobs:
           echo "Environment: ${{ steps.environment.outputs.result }}"
           echo "OrgId: $ORG"
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Bake manifests with Kustomize
         uses: azure/k8s-bake@v4
