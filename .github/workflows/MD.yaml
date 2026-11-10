@@ -67,7 +67,7 @@ jobs:
           echo "Environment: ${{ steps.environment.outputs.result }}"
           echo "OrgId: $ORG"
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Bake manifests with Kustomize
         uses: azure/k8s-bake@v4
@@ -85,7 +85,7 @@ jobs:
           kubelogin-version: 'v0.2.7'
 
       - name: Set the target cluster
-        uses: azure/aks-set-context@v4
+        uses: azure/aks-set-context@v5
         with:
           cluster-name: ${{ env.CLUSTER_NAME }}
           resource-group: ${{ steps.rg.outputs.result }}
